@@ -44,6 +44,15 @@ Vite reads `apps/mobile/.env`. Client env vars must be prefixed `VITE_`
 (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) and accessed via `import.meta.env`.
 `.env.example` is committed; `.env` is gitignored.
 
+`VITE_SUPABASE_URL` must be the bare project URL with NO path suffix:
+  ✓  `https://<ref>.supabase.co`
+  ✗  `https://<ref>.supabase.co/rest/v1/`   ← causes "Invalid path" error
+The supabase-js client appends all API paths itself. The URL with `/rest/v1/` is
+shown in the Supabase dashboard's API docs for direct REST calls — it is NOT the
+base URL for the JS client.
+
+Restart the Vite dev server after editing `.env` — Vite reads env at startup only.
+
 ## Interface preservation (why this whole thing stays Figma-safe)
 Wiring a stub must NOT change the exported interface that `packages/ui` and
 `apps/mobile` already consume. Same hook name, same shape. If a real implementation
