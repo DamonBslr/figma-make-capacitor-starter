@@ -73,6 +73,20 @@ from scratch. Both paths produce the same result.
    `apps/mobile/src`. `packages/ui` must compile without importing any concrete
    implementation from `packages/core` — it may import shared TYPES/interfaces only.
 
+   **Fonts — mandatory.** Figma Make outputs `@import url('https://fonts.googleapis.com/...')`
+   in CSS. Never ship that. Loading Google Fonts at runtime sends user IPs to Google,
+   which violates GDPR (Germany has case law on this specifically). Replace every
+   Google Fonts CDN reference with locally-bundled Fontsource packages:
+   1. Identify every font family in the `@import url(...)` string.
+   2. Install `@fontsource-variable/<family-name>` (preferred) or `@fontsource/<family-name>`
+      in `packages/ui`. Use the `-variable` variant when a variable font exists.
+   3. In `packages/ui/src/styles/fonts.css`, replace the `@import url(...)` lines with
+      `@import '@fontsource-variable/<family-name>/index.css'` (add `-italic.css` or
+      `wght-italic.css` variant if italic weights were requested).
+   4. Do NOT add a `<link>` to `fonts.googleapis.com` in `index.html` — that has the
+      same privacy problem as the CSS `@import url(...)`.
+   5. Note each font package installed in `TRANSFORMATION_REPORT.md`.
+
 5. **Separate logic from presentation** (the core judgment step). For each concern
    found in step 2: move it into `packages/core` behind a typed interface (a
    service or a hook), and replace the inline version in the UI with a prop or
