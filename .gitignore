@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.figma-src/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+apps/mobile/ios/App/build/
+apps/mobile/ios/App/Pods/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+ios/DerivedData/

@@ -1,0 +1,11 @@
+{
+  "name": "app-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "build:ui": "echo 'build packages/ui' ",
+    "build:mobile": "echo 'build apps/mobile' ",
+    "sync": "echo 'run cap sync from apps/mobile' "
+  }
+}

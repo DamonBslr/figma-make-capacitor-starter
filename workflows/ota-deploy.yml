@@ -1,0 +1,22 @@
+# OTA live-update deployment via Capgo.
+# Complete this workflow after the Capgo channel is created (see TRANSFORMATION_REPORT.md).
+name: OTA Deploy
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/ui/**'
+      - 'apps/mobile/src/**'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - run: pnpm install
+      - run: pnpm build:ui && pnpm build:mobile
+      # TODO: replace MY_CHANNEL with your Capgo channel name, then uncomment:
+      # - run: npx @capgo/cli bundle upload --channel MY_CHANNEL
+      #   env:
+      #     CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
