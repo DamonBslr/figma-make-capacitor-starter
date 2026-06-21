@@ -54,13 +54,12 @@ app currently reflects. It is the single source of truth for "where we are":
 Read `FIGMA_SOURCE.json` at the repo root.
 
 - **If it exists:** use `synced_commit` + `branch` + `repo` as the diff base. Go to step 2.
-- **If it is missing** (the project predates this skill): this is a **baseline run**.
-  Ensure `.figma-src/` is cloned (clone from the known Figma repo URL if absent —
-  ask the user for it if you cannot read it from an existing `.figma-src/` remote).
-  `git fetch` it, record the current `origin/<branch>` HEAD as `synced_commit`, write
-  `FIGMA_SOURCE.json`, commit just that file, and STOP. Tell the user: "Anchor
-  established at `<sha>`. No diff is possible on the first run — the next
-  `/sync-figma` will compute real changes from here." Do not attempt to map anything.
+- **If it is missing:** STOP and tell the user to set the anchor first with
+  `/set-figma-source` (it clones/inspects `.figma-src/`, verifies the commit the
+  current `packages/ui` reflects, and writes `FIGMA_SOURCE.json`). Pinning to the
+  commit the app was actually transformed from — rather than upstream HEAD — is what
+  makes the first diff meaningful, so it is a deliberate human-confirmed step, not
+  something this skill guesses. Do not attempt to map anything without the anchor.
 
 ### 2. Fetch upstream (read-only)
 `.figma-src/` is read-only upstream source: never edit it, never push to it, never

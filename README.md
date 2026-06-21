@@ -237,6 +237,11 @@ is a one-time bootstrap).
 /sync-figma [branch]        # default branch: main
 ```
 
+**First, set the anchor once** (per app) with `/set-figma-source` — it records the
+Figma repo URL and the commit your current `packages/ui` reflects into a committed
+`FIGMA_SOURCE.json`, cloning/inspecting `.figma-src/` and verifying the commit
+resolves upstream. After that, `/sync-figma` is the repeatable loop.
+
 It runs the `figma-sync` skill, which anchors on `FIGMA_SOURCE.json` (a committed
 file recording the last-synced upstream commit), diffs the Figma repo since then,
 and writes a reviewable `SYNC_PLAN.md` — a per-file mapping of each upstream change
@@ -280,6 +285,7 @@ cd apps/mobile && npx cap open android
 │   ├── commands/
 │   │   ├── init-from-figma.md     # Phase 1 slash command (bootstrap, once)
 │   │   ├── wire-supabase.md       # Phase 2 slash command
+│   │   ├── set-figma-source.md    # Set the FIGMA_SOURCE.json sync anchor (once)
 │   │   └── sync-figma.md          # Ongoing design sync (run repeatedly)
 │   └── skills/                    # Agent skills (copy to ~/.claude/skills)
 │       ├── figma-make-to-capacitor/
