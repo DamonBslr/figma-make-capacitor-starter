@@ -15,6 +15,19 @@ rules keep the design→production pipeline working. Follow them in every sessio
 If you find data/auth/business logic inside `packages/ui`, that is a bug — move it
 to `packages/core` and leave the UI consuming a prop or hook.
 
+## Safe areas (device insets)
+- Respect device safe areas on every screen — notch, Dynamic Island, status bar,
+  and the home indicator. Content must never sit under them.
+- Use the CSS env() insets, not hardcoded pixel values:
+  `env(safe-area-inset-top/right/bottom/left)`. Pair with `viewport-fit=cover`
+  in the `apps/mobile` index `<meta name="viewport">` so the insets resolve.
+- Figma Make prototypes assume a full rectangular web viewport and have no inset
+  awareness. When syncing or building screens in `packages/ui`, apply insets at
+  the layout shell (scroll containers, sticky headers, bottom nav/CTAs) rather
+  than editing individual Figma-derived components, so the next sync stays clean.
+- Prefer Tailwind/`@capacitor/*`-safe utilities (e.g. `pt-[env(safe-area-inset-top)]`,
+  `min-h-[100dvh]`) over fixed heights; account for the keyboard on input screens.
+
 ## Hard rules
 - `.figma-src/` is read-only upstream source. Never edit it or push to it.
 - Never fabricate auth, secrets, tokens, or data-access logic. Backend touchpoints
