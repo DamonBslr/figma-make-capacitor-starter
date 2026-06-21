@@ -22,6 +22,12 @@ interface rules before editing.
 - The target file in `packages/core/src/...` (one stub).
 - For data stubs: the table it maps to (from the schema step).
 - For secret-API stubs: confirmation to create an Edge Function.
+- **Spec context (optional).** When invoked under the `/wire-supabase`
+  orchestrator, you are given the path to `specs/backend/<feature>.md` plus the
+  specific stub name. Read that spec FIRST: it carries the interface contract to
+  preserve, the target table, the edge-function name/secret, and the planned
+  sync→async shell routing — use them instead of re-deriving. Without a spec path
+  (standalone use), derive these yourself as before.
 
 ## Procedure
 1. Read the target file and note its EXPORTED interface (the `export interface ...`
@@ -47,6 +53,8 @@ interface rules before editing.
 7. Output a short summary: file changed, table/function used, whether the interface
    changed, which shell/UI files were touched, and any remaining human step
    (e.g. "set OPENAI key: `supabase secrets set ...`", or "create storage bucket").
+   If a spec path was provided, name the spec and the stub completed so the
+   orchestrator can update the matching Linear issue.
 
 ## Guardrails
 - Auth code is security-critical. Implement it, but flag in the summary that it

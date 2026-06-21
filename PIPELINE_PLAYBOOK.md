@@ -103,9 +103,13 @@ git add -A && git commit -m "Initial transformation from Figma Make"
 /wire-supabase
 ```
 It walks every step itself — creating the Supabase project, pasting credentials into
-`.env`, generating the schema, wiring stubs, AI hooks, and native auth — pausing at
-each gate with instructions. You don't need to pre-create anything.
-→ **REVIEW 2–6** happen along the way (see checklist).
+`.env`, generating the schema, then **specing every backend feature** (one Linear
+issue per feature, mirrored into `specs/backend/`) and implementing them **one at a
+time, each in its own subagent** — through AI hooks and native auth, pausing at each
+gate. You don't need to pre-create anything. The feature list is derived from your
+actual prototype, not a fixed list.
+→ **REVIEW 2–6** happen along the way (see checklist), including the new
+spec-review gate.
 
 ### 4. Ship
 - OTA: set up the Capgo channel and push the first bundle (the transformation report
@@ -126,6 +130,14 @@ Everything else is automated. These are the checkpoints worth stopping for.
 **REVIEW 2 — schema SQL, before it's applied**
 - Paste it for a second opinion before `db push`. Checking: RLS enabled on *every*
   table, owner policies use `auth.uid()`, no table left world-readable.
+
+**REVIEW 2.5 — the feature specs, before any wiring (NEW spec-review gate)**
+- `/wire-supabase` writes one spec per backend feature (a Linear issue under the
+  "<App> Backend" project, mirrored into `specs/backend/<slug>.md`) and stops.
+- Read the feature list + `specs/backend/_index.md` ordering. Confirm every fake
+  stub maps to a feature, the order is sane (auth first), and each spec's interface
+  contract + acceptance criteria look right. Edit in Linear or the mirrored files,
+  then approve. Implementation does not start until you do.
 
 **REVIEW 3 — the `useAuth` implementation (highest-risk code in the app)**
 - Read it line by line. Session comes from Supabase (not a faked `isAuthenticated`),
@@ -157,7 +169,8 @@ Edge Function secrets, never in the repo.
 
 ## Realistic session pacing
 - Session A: steps 1–2 + REVIEW 1. (App boots with stubs.)
-- Session B: `/wire-supabase` through the data stubs + REVIEW 2–4. (Real auth + data.)
+- Session B: `/wire-supabase` through schema + feature specs + the first data features
+  (one subagent each) + REVIEW 2–4. (Real auth + data.)
 - Session C: AI hooks (Edge Functions) + native OAuth + REVIEW 5–6.
 Each gate is a clean stopping point; don't force it all into one sitting.
 

@@ -12,10 +12,30 @@ Figma Make generates a working React app from your design. This repo gives you a
 
 1. **Restructure** that Figma output into a maintainable monorepo (UI layer Figma can keep overwriting, logic layer you own)
 2. **Wrap it in Capacitor** for native iOS and Android
-3. **Wire a real Supabase backend** — auth, database, edge functions — incrementally, with human review gates at each step
+3. **Spec and wire a real Supabase backend** — auth, database, edge functions. The pipeline reads your prototype, writes a spec per backend feature, then implements them one at a time, each in its own focused agent, with human review gates throughout
 4. **Ship** UI changes in minutes via OTA, and native changes through the stores
 
-The heavy lifting is done by Claude Code slash commands and agent skills. You run the commands; Claude does the restructuring, wiring, and scaffolding; you review and approve at each gate.
+The heavy lifting is done by Claude Code slash commands and agent skills. You run the commands; Claude does the restructuring, specing, wiring, and scaffolding; you review and approve at each gate.
+
+> **The whole pipeline is three commands, run in order:** `/init-from-figma` (once, to bootstrap) → `/wire-supabase` (once, to build the backend) → OTA / store ship (repeatedly). The rest of this README walks each one.
+
+---
+
+## The workflow at a glance
+
+Run these in order. You only do Setup and Phase 1 once per app; Phase 3 repeats every release.
+
+| When | You run | Claude does | You review |
+|---|---|---|---|
+| **Once, on your machine** | Setup (copy skills/commands) | — | — |
+| **Once per new app** | clone this template | — | — |
+| **Phase 1 — bootstrap** | `/init-from-figma <url> <name> <id>` | Restructures Figma export → monorepo + Capacitor, stubs the backend | `TRANSFORMATION_REPORT.md` (what moved, the stub list) → commit |
+| **Phase 2 — backend** | `/wire-supabase` | Foundation → schema → **specs every feature** → implements them one subagent at a time | schema/RLS, the **specs**, `useAuth`, key safety, async UI, OAuth |
+| **Phase 3 — ship UI** | `pnpm build` + Capgo upload | — | — (live via OTA in minutes) |
+| **Phase 3 — ship native** | `cap sync` + Xcode/Android Studio | — | sign + submit to stores |
+| **On design change** | re-run `/init-from-figma` | Rewrites `packages/ui` only | the `packages/ui` diff |
+
+Each command stops and waits at every human gate — you are never racing a long autonomous run.
 
 ---
 
@@ -64,6 +84,7 @@ This separation is what makes re-syncing from Figma safe — the pipeline can ov
 - A [Supabase](https://supabase.com/) account (free tier works)
 - A [Capgo](https://capgo.app/) account (for OTA updates)
 - A Figma Make project exported as a GitHub repo
+- A [Linear](https://linear.app/) workspace connected to Claude Code — Phase 2 writes one backend feature spec per Linear issue (the [Linear MCP](https://linear.app/docs/mcp) connector)
 
 ---
 
@@ -82,6 +103,7 @@ mkdir -p ~/.claude/skills ~/.claude/commands
 cp -r .claude/skills/figma-make-to-capacitor ~/.claude/skills/
 cp -r .claude/skills/supabase-foundation      ~/.claude/skills/
 cp -r .claude/skills/supabase-schema          ~/.claude/skills/
+cp -r .claude/skills/supabase-feature-spec    ~/.claude/skills/
 cp -r .claude/skills/supabase-wire-stub       ~/.claude/skills/
 cp -r .claude/skills/supabase-native-auth     ~/.claude/skills/
 
@@ -139,29 +161,46 @@ git add -A && git commit -m "Initial transformation from Figma Make"
 
 ---
 
-## Phase 2 — Wire the Supabase Backend
+## Phase 2 — Spec and Wire the Supabase Backend
 
 ```
 /wire-supabase
 ```
 
-This runs five sub-skills in sequence, pausing at human gates:
+A full prototype's backend is large and unique to your app, so this phase is
+**spec-driven and multi-agent** rather than a fixed checklist. The orchestrator
+sets up the foundation and schema, then **reads your prototype and writes a spec
+for every backend feature** (one Linear issue each, mirrored into
+`specs/backend/`). You review the specs, then it implements them **one feature at
+a time, each in its own focused subagent** — so no single run has to hold your
+whole backend in context.
+
+The command runs itself, pausing at each gate. The order:
 
 | Step | What happens | Your gate |
 |---|---|---|
 | 1. Foundation | Supabase client, PKCE auth flow, Capacitor-safe session storage | Create Supabase project, fill `.env`, run `supabase login && supabase link` |
 | 2. Schema | Generate Postgres tables + RLS from your domain types | Review SQL, run `supabase db push`, generate DB types |
-| 3. Stubs | Wire stubs to real Supabase calls, one at a time | Test the app after each stub — confirm it works before moving on |
-| 4. Edge Functions | Secret APIs (AI, image gen) routed through Supabase Edge Functions | Set provider secrets, deploy functions |
-| 5. Native OAuth | Google and Apple sign-in via native plugins | Complete provider console checklist, test on real device |
+| 3. **Feature specs** *(new)* | Reads `packages/ui` + stubs + `TRANSFORMATION_REPORT.md`, derives the feature list, writes one Linear issue per feature mirrored to `specs/backend/<slug>.md`, ordered in `_index.md` | **Spec-review gate** — read the feature list + `specs/backend/_index.md`, edit in Linear or the files, then approve before any code is written |
+| 4. **Per-feature implementation** *(new)* | Loops the approved specs in order; spawns **one subagent per feature** to wire its stubs (the orchestrator owns the schema + `packages/core` barrel) | After each feature: run the app and confirm; the feature's Linear issue moves to Done |
+| 4a. Edge-function features | Features that call secret APIs (AI, image gen) are routed through Supabase Edge Functions | Set provider secrets (`supabase secrets set ...`), deploy the function, test |
+| 4b. Native-auth feature | Google/Apple sign-in via native plugins | Complete provider console checklist (see `docs/social-auth-setup.md`), test on a real device |
 
-Each step is reviewable and reversible before moving to the next.
+Steps 4a and 4b are just features with a different classification — they flow
+through the same per-feature loop, only their gate differs. Each feature is
+reviewable and reversible before the next one starts.
+
+**Why specs + subagents?** The specs are a GitHub-spec-kit-style record you (and
+the agents) can review before any implementation, and they're tracked in Linear.
+The per-feature subagents keep each implementation bounded and focused instead of
+one giant context window trying to wire everything at once.
 
 **Key security rules enforced throughout:**
 - Only the Supabase `anon` key goes in `.env` — never the `service_role` key
 - Every table gets RLS policies, scoped to the authenticated user
 - `useAuth` implementation (highest-risk code) gets flagged for explicit human review
 - Secret provider keys (OpenAI, etc.) live only in Supabase Edge Function secrets, never in the client
+- Subagents only ever write `packages/core`, `supabase/functions`, and the `apps/mobile` shell — never `packages/ui`, `.figma-src`, or migrations (the schema stays owned by the orchestrator)
 
 ---
 
@@ -233,6 +272,7 @@ cd apps/mobile && npx cap open android
 │       ├── figma-make-to-capacitor/
 │       ├── supabase-foundation/
 │       ├── supabase-schema/
+│       ├── supabase-feature-spec/  # Discovers features → writes specs (Phase 2 step 3)
 │       ├── supabase-wire-stub/
 │       └── supabase-native-auth/
 ├── apps/
@@ -240,6 +280,10 @@ cd apps/mobile && npx cap open android
 ├── packages/
 │   ├── core/                      # Logic layer (hand-written)
 │   └── ui/                        # Presentation layer (Figma-derived)
+├── specs/
+│   └── backend/                   # Per-feature backend specs (generated in Phase 2)
+├── docs/
+│   └── social-auth-setup.md       # Step-by-step Google + Apple OAuth console guide
 ├── CLAUDE.md                      # Project rules (loaded by Claude Code)
 ├── PIPELINE_PLAYBOOK.md           # Detailed pipeline walkthrough
 ├── tsconfig.base.json             # Path aliases (@app/ui, @app/core)

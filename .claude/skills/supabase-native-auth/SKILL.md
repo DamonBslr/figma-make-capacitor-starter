@@ -30,15 +30,16 @@ Do this AFTER email/password auth works (via supabase-wire-stub on `useAuth`).
    Keep `useAuth`'s exported interface unchanged — only the OAuth method bodies change.
 4. Wire the deep-link listener in the `apps/mobile` shell to complete the callback.
 
-## Human checklist (cannot be automated — see references/human-checklist.md)
-Surface these to the user and STOP; do not attempt them:
-- Google Cloud console: create OAuth client IDs (iOS, Android, Web).
-- Apple Developer: enable Sign in with Apple, create the Service ID / key.
-- Supabase dashboard → Authentication → Providers: enable Google/Apple, paste the
-  client IDs/secrets.
-- Supabase dashboard → Authentication → URL Configuration: add redirect
-  `com.muse.app://**`.
-- Android signing: add the SHA-1/256 of the signing key to the Google client.
+## Human checklist (cannot be automated)
+Surface `references/human-checklist.md` to the user and STOP; do not attempt these:
+- Google Cloud console: OAuth consent screen, three client IDs (Web/iOS/Android).
+- Apple Developer: enable Sign in with Apple on App ID, create Services ID + key (.p8).
+- Supabase dashboard → Auth → Providers: enable Google/Apple, paste IDs/secrets.
+- Supabase dashboard → Auth → URL Configuration: add redirect `<bundle-id>://**`.
+- Android signing: SHA-1 fingerprint of signing key registered on the Android client.
+
+For step-by-step instructions see `docs/social-auth-setup.md` in the project root.
+That file was written from a real run and covers every console screen in detail.
 
 ## Guardrails
 - NEVER enter credentials into provider consoles or the Supabase dashboard, and
