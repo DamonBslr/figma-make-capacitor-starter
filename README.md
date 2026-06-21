@@ -229,13 +229,25 @@ Required when you add new Capacitor plugins, change permissions, or update the n
 
 ## Re-syncing from Figma
 
-When your design evolves in Figma Make, you can re-run the init command. Because `packages/ui` is presentation-only and `packages/core` is untouched by the sync, your backend wiring survives the update.
+When your design evolves in Figma Make, pull the changes in with `/sync-figma` —
+the dedicated incremental-sync command (do **not** re-run `/init-from-figma`; that
+is a one-time bootstrap).
 
 ```
-/init-from-figma <same args>
+/sync-figma [branch]        # default branch: main
 ```
 
-Review the diff in `packages/ui` before committing — verify no business logic crept back in.
+It runs the `figma-sync` skill, which anchors on `FIGMA_SOURCE.json` (a committed
+file recording the last-synced upstream commit), diffs the Figma repo since then,
+and writes a reviewable `SYNC_PLAN.md` — a per-file mapping of each upstream change
+to `packages/ui`. It **stops for your approval** before writing anything, then
+applies UI-only changes, advances the anchor, and opens a PR.
+
+Because it writes only `packages/ui` (plus `// TODO(human-review)` stubs for
+anything that implies new backend work — flagged for `/wire-supabase`, never wired
+by the sync), your hand-written `packages/core` logic survives every update. The
+first run on an existing project just establishes the anchor; real diffs start from
+the next sync. Review the `SYNC_PLAN.md` and the resulting PR before merging.
 
 ---
 
@@ -266,10 +278,12 @@ cd apps/mobile && npx cap open android
 .
 ├── .claude/
 │   ├── commands/
-│   │   ├── init-from-figma.md     # Phase 1 slash command
-│   │   └── wire-supabase.md       # Phase 2 slash command
+│   │   ├── init-from-figma.md     # Phase 1 slash command (bootstrap, once)
+│   │   ├── wire-supabase.md       # Phase 2 slash command
+│   │   └── sync-figma.md          # Ongoing design sync (run repeatedly)
 │   └── skills/                    # Agent skills (copy to ~/.claude/skills)
 │       ├── figma-make-to-capacitor/
+│       ├── figma-sync/             # Incremental design sync → packages/ui only
 │       ├── supabase-foundation/
 │       ├── supabase-schema/
 │       ├── supabase-feature-spec/  # Discovers features → writes specs (Phase 2 step 3)
@@ -304,10 +318,10 @@ cd apps/mobile && npx cap open android
 
 ## Status
 
-> **WIP.** The Phase 1 transformation and Phase 2 Supabase wiring are functional. Known gaps:
+> **WIP.** The Phase 1 transformation, Phase 2 Supabase wiring, and the incremental
+> design sync (`/sync-figma`) are functional. Known gaps:
 > - OTA CI/CD workflow needs per-project Capgo channel configuration
 > - Android native auth (Google Sign-In) needs additional testing
-> - Re-sync flow (updating an already-transformed project) is not yet hardened
 > - No automated tests for the pipeline itself
 
 Contributions and issues welcome.

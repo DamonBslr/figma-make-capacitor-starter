@@ -161,6 +161,14 @@ Edge Function secrets, never in the repo.
   (OAuth doesn't complete reliably in web preview). Confirm the session survives an
   app restart.
 
+**REVIEW 7 — the sync plan, before any file changes (ongoing, after launch)**
+- `/sync-figma` writes `SYNC_PLAN.md` and stops. Read the per-file table: confirm
+  every change is classified sanely (ui-only vs ui+stub vs backend-follow-up), the
+  boundary check holds (nothing written outside `packages/ui` except flagged stubs),
+  and no exported `packages/ui` signature is silently changed. Edit the plan or
+  approve. Then the sync applies + opens a PR — review that PR before merge, and run
+  `/wire-supabase` for any backend follow-ups it flagged.
+
 **Before you ship**
 - RLS verified on every table · `useAuth` reviewed · `.env` gitignored · OTA channel
   live · native signing configured.
@@ -176,12 +184,30 @@ Each gate is a clean stopping point; don't force it all into one sitting.
 
 ---
 
-## Not built yet — the ongoing Figma sync (phase 2)
-The loop for *future* design changes after launch: a webhook on the Figma repo →
-`repository_dispatch` → a reconciliation skill that writes only into `packages/ui`
-and opens a PR. Until that's built, re-syncing a Figma change is manual: re-run the
-relevant part of the transformation against `packages/ui` only, and never let it
-touch `packages/core`. Build this skill when design churn starts to cost you time.
+## Ongoing Figma sync (after launch)
+When the design evolves in Figma Make, pull the changes in with one command:
+
+```
+/sync-figma [branch]        # default branch: main
+```
+
+It runs the `figma-sync` skill, which:
+1. Reads `FIGMA_SOURCE.json` — the committed anchor recording which upstream Figma
+   commit the app currently reflects. (First run establishes the anchor and stops;
+   real diffs start from the next run.)
+2. Fetches `.figma-src/` (read-only) and diffs `synced_commit..origin/<branch>`.
+3. Maps each changed file to a layer and writes `SYNC_PLAN.md` — a per-file table
+   (ui-only / ui+stub / backend-follow-up / delete / ignore) with a boundary check.
+   → **REVIEW 7** (see checklist). **Hard stop — nothing is written yet.**
+4. After you approve: applies UI-only changes into `packages/ui` (plus
+   `// TODO(human-review)` stubs for anything implying backend work), typechecks,
+   advances `FIGMA_SOURCE.json`, and opens a PR. Backend work is flagged for
+   `/wire-supabase`, never wired by the sync.
+
+This is non-destructive by construction: it writes only `packages/ui` (+ flagged
+stubs), so your hand-written `packages/core` logic survives every sync. UI-only
+syncs ship via OTA once the PR merges; anything touching `packages/core` goes
+through `/wire-supabase` first.
 
 ---
 
@@ -191,5 +217,6 @@ touch `packages/core`. Build this skill when design churn starts to cost you tim
 |------|---------|----------|------------|
 | New app from prototype | clone starter → `/init-from-figma <url> <name> <id>` | `TRANSFORMATION_REPORT.md` | what moved, stub list |
 | Wire backend | `/wire-supabase` | each gate (self-guided) | schema/RLS, `useAuth`, keys, async UI, OAuth |
+| Sync a design change | `/sync-figma [branch]` | `SYNC_PLAN.md`, then a PR | per-file mapping, boundary check |
 | Ship UI change | OTA push (Capgo) | — | — |
 | Ship native change | store submission | — | — |
