@@ -29,6 +29,7 @@ cat > package.json <<JSON
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
+    "dev": "pnpm --filter @app/mobile dev",
     "build:ui": "echo 'build packages/ui' ",
     "build:mobile": "echo 'build apps/mobile' ",
     "sync": "echo 'run cap sync from apps/mobile' "

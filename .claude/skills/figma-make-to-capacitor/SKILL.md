@@ -49,7 +49,7 @@ test -f packages/ui/package.json && test -f tsconfig.base.json && echo "starter"
 
 **If starter detected:** steps 3, 8, and 9 are already done — skip them.
 The skeleton, `CLAUDE.md`, and `App.tsx` with `notifyAppReady` are pre-baked.
-Proceed directly from step 1 → 2 → 4 → 5 → 6 → 7 → 10 → 11.
+Proceed directly from step 1 → 2 → 4 → 5 → 6 → 7 → 10 → 10.5 → 11.
 
 **If no starter:** follow all 11 steps — the scaffold script creates the skeleton
 from scratch. Both paths produce the same result.
@@ -157,6 +157,27 @@ that App Store Connect rejects at upload time.
 
 10. **Build + sync.** Build the web bundle and run `cap sync`. Resolve type and
     build errors. Do NOT open native IDEs, sign, or submit to any store.
+
+10.5. **Wire local dev with hot reload.** `apps/mobile` needs a Vite dev server
+    that serves the React tree (importing `@app/ui` and `@app/core` via the monorepo
+    workspace aliases) and supports HMR. The root `package.json` already has a `dev`
+    script stub (`pnpm --filter @app/mobile dev`) from the scaffold; make it real:
+
+    a. Add a `vite.config.ts` to `apps/mobile` that resolves the `@app/ui` and
+       `@app/core` path aliases from `tsconfig.base.json` (use `vite-tsconfig-paths`
+       or map them explicitly in `resolve.alias`).
+    b. Add a `"dev": "vite"` script to `apps/mobile/package.json`.
+    c. Verify `pnpm dev` from the repo root starts the server and HMR works for
+       changes in `packages/ui/src`.
+
+    **Capacitor livereload on device/simulator** (optional, human-run):
+    Once the Vite dev server is running (`pnpm dev`), the native app can point at
+    it instead of bundled assets:
+    ```
+    # from apps/mobile — replace <HOST_IP> with your machine's LAN IP
+    npx cap run ios --livereload --external --host <HOST_IP>
+    ```
+    Note this in `TRANSFORMATION_REPORT.md` as a dev-workflow tip.
 
 11. **Finalize the report.** `TRANSFORMATION_REPORT.md` must list: what moved
     where, every stub awaiting a human, every web-only adaptation made, and the
