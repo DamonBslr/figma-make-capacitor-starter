@@ -38,6 +38,12 @@ to `packages/core` and leave the UI consuming a prop or hook.
 - Apply this on every sync and when building new screens. If the shared button
   can't express a Figma style, add the variant to the shared component rather
   than reintroducing a bespoke button.
+- When Figma uses an animated `motion.button` (Framer Motion), don't replace it
+  with the plain shared button — that drops the animation. Instead generate/use a
+  shared `MotionButton` component in `packages/ui` that wraps `motion.button` and
+  carries the shared button's variants/styles, so the motion props (`whileTap`,
+  `whileHover`, transitions, etc.) live in one place. Route every animated button
+  through `MotionButton`; preserve the intended Figma animation exactly.
 - The same principle holds for other repeated primitives (inputs, cards, etc.):
   prefer the shared `packages/ui` component over duplicating Figma's inline markup.
 
