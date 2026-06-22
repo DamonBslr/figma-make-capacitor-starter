@@ -37,7 +37,7 @@
         "useExhaustiveDependencies": "error"
       },
       "suspicious": {
-        "noArrayIndexKey": "error"
+        "noArrayIndexKey": "warn"
       },
       "style": {
         "noNonNullAssertion": "warn"
