@@ -107,6 +107,14 @@ to `packages/core` and leave the UI consuming a prop or hook.
   disable comment. Make the body and the dep array agree.
 - Apply at the component level on every sync and when building new screens.
 
+## iOS input zoom (WKWebView)
+- iOS WKWebView auto-zooms the viewport when a focused input's computed font-size is below 16px. This must never happen.
+- The fix lives in `apps/mobile/index.html` — not in `packages/ui` (which is Figma-synced and would be clobbered):
+  - Viewport meta must include `maximum-scale=1.0, user-scalable=no`.
+  - An inline `<style>` must declare `input, textarea, select { font-size: 16px !important; }`. The `!important` is required to beat Tailwind's `md:text-sm` breakpoint utility; do not remove it even if the IDE warns about it.
+- Never add a per-component or per-screen font-size override as a workaround — the global rule in `index.html` is the single source of truth.
+- When adding new input types (e.g. `<select>`, OTP slots, custom inputs), verify they are covered by the global rule or explicitly set `font-size: 16px` on the element.
+
 ## Hard rules
 - `.figma-src/` is read-only upstream source. Never edit it or push to it.
 - Never fabricate auth, secrets, tokens, or data-access logic. Backend touchpoints
