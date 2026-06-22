@@ -20,8 +20,10 @@ the user this skill is for first-time setup only.
 
 ## Inputs (ask only for what is missing)
 - Figma Make repo URL, or a path to an already-cloned copy.
-- App display name, e.g. `Acme`.
-- Bundle / app id, e.g. `com.acme.app`.
+- App display name, e.g. `Acme`. **Must be confirmed available in App Store Connect
+  before use** — see Step 0.
+- Bundle / app id, e.g. `com.acme.app`. **Must be registered in Apple Developer
+  Portal and claimed in App Store Connect before use** — see Step 0.
 - OTA provider — default `capgo`.
 - Package manager — default `pnpm` (bun and npm supported). Export `PM` before
   running the scripts, e.g. `export PM=pnpm`.
@@ -53,6 +55,38 @@ Proceed directly from step 1 → 2 → 4 → 5 → 6 → 7 → 10 → 11.
 from scratch. Both paths produce the same result.
 
 ## Procedure
+
+### Step 0 — App Store pre-flight (do this BEFORE choosing identifiers)
+
+Before writing a single line of code or picking a bundle ID, the app name and
+identifier must be reserved in the relevant store(s). If skipped, the user can
+spend hours on a bundle ID that is already taken, or ship a build under a name
+that App Store Connect rejects at upload time.
+
+**iOS (App Store Connect)**
+1. Sign in to [App Store Connect](https://appstoreconnect.apple.com) → My Apps → **+** → New App.
+2. Select **iOS** (or universal). Enter the **app name** — this is what appears
+   on the App Store. If the name is taken you'll see an error immediately; resolve
+   it before continuing.
+3. Enter the **Bundle ID** you plan to use (it must already exist, or be creatable,
+   in your Apple Developer Program portal → Certificates, Identifiers & Profiles).
+   Register the Identifier there first if it doesn't exist yet.
+4. Complete the rest of the New App form (SKU, primary language) and click Create.
+   You do not need metadata or screenshots at this stage — you just need the record
+   to exist so your bundle ID is locked and the name is claimed.
+5. Note the numeric **Apple ID** (App ID) shown on the App Information page — you
+   will need it for TestFlight and for setting `apple_id` in Fastlane or `eas.json`.
+
+**Android (Google Play Console)** *(if targeting Android)*
+1. Sign in to [Google Play Console](https://play.google.com/console) → All apps → **Create app**.
+2. Enter the app name, select app type and category, agree to policies, and click
+   Create app. The package name is set later when you upload the first AAB/APK —
+   but decide it now and use it consistently, because it cannot be changed after
+   the first upload.
+
+**Do not proceed to step 1 until both of these are done for every target platform.**
+
+---
 
 1. **Clone source, read-only.** Clone the Figma repo into `.figma-src/` at the
    repo root. It is upstream source: never edit it, never push to it. (It is
