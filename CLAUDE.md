@@ -47,6 +47,66 @@ to `packages/core` and leave the UI consuming a prop or hook.
 - The same principle holds for other repeated primitives (inputs, cards, etc.):
   prefer the shared `packages/ui` component over duplicating Figma's inline markup.
 
+## Form accessibility (label ↔ control association)
+- Every `<label>` must be programmatically associated with its form control
+  (`<input>`/`<textarea>`/`<select>`). Figma Make emits visually-adjacent but
+  unlinked labels — that fails a11y (screen readers, tap-target-to-focus) and
+  trips the "A form label must be associated with an input" lint.
+- Default fix: give the control an `id` and the label a matching `htmlFor`. Use a
+  stable, screen-scoped id (`auth-email`, `character-name`). Inside a `.map`,
+  derive the id from the row key (`` htmlFor={`character-field-${field.key}`} ``)
+  so each pair stays unique.
+- Alternative: wrap the control inside the `<label>` (implicit association) when
+  there's no styling reason to keep them as siblings.
+- Apply on every sync and when building new screens. Never leave a bare `<label>`
+  with no `htmlFor` and no wrapped control.
+
+## Icon / SVG accessibility (decorative vs. meaningful)
+- An `<svg>` has an implicit `img` role, so it needs an accessible name or it must
+  be explicitly hidden. Figma Make emits bare `<svg>` icons with neither — that
+  trips the "Alternative text title element cannot be empty" lint and confuses
+  screen readers.
+- Default fix (decorative): when the icon adds no information the surrounding
+  text/state doesn't already convey — a checkmark inside a toggled button, a
+  chevron next to a label, a glyph beside its own caption — mark it
+  `aria-hidden="true"` so it's removed from the accessibility tree. Don't invent a
+  `<title>`; that just adds redundant noise.
+- Alternative (meaningful): when the icon is the *only* thing conveying meaning —
+  an icon-only button, a standalone status indicator — give it an accessible name
+  via `aria-label` on the control (e.g. icon-only button) or a non-empty
+  `<title>` inside the `<svg>`. Never leave the name empty.
+- Apply at the layout/component level, preferring the shared icon/button
+  primitives over editing Figma-derived inline markup, so the next sync stays
+  clean. Apply on every sync and when building new screens. Never leave an `<svg>`
+  with no `aria-hidden`, no `aria-label`, and no non-empty `<title>`.
+
+## List keys (no array index as key)
+- Never use a bare array index as a React `key` (`key={i}`). Figma Make emits this
+  in `.map()` blocks — it trips the "Avoid using the index of an array as key
+  property in an element" lint, and on reorder/insert/delete React matches by
+  position instead of identity, reusing the wrong DOM node and corrupting state.
+- Default fix: key on a stable, unique field of the item (`key={item.id}`,
+  `key={field.key}`). When the data has no unique field and content isn't
+  guaranteed unique (split text, blank/repeated lines), combine the index with the
+  content (`` key={`${i}-${line}`} ``) so the key is both stable and unique.
+- Apply at the component level on every sync and when building new screens. Never
+  leave a `.map()` keyed on the bare index.
+
+## Effect dependencies (no unused deps)
+- A `useEffect`/`useMemo`/`useCallback` dependency array must list exactly the
+  reactive values the hook *body* reads — no more, no less. Figma Make often emits
+  a "scroll to bottom on new content" effect that lists the content prop as a dep
+  but only touches a ref inside, tripping the "This hook specifies more
+  dependencies than necessary" lint.
+- The intent (re-run when that value changes) is usually correct — the value just
+  isn't referenced in the body. Default fix: actually read the value in the effect
+  (`` if (!storyContent) return; ``) so the dependency is justified, rather than
+  deleting the dep and silently changing when the effect re-runs.
+- Don't paper over it by depending on a derived expression (`storyContent.length`)
+  the body still doesn't read — the lint fires the same way. Don't add an eslint
+  disable comment. Make the body and the dep array agree.
+- Apply at the component level on every sync and when building new screens.
+
 ## Hard rules
 - `.figma-src/` is read-only upstream source. Never edit it or push to it.
 - Never fabricate auth, secrets, tokens, or data-access logic. Backend touchpoints
