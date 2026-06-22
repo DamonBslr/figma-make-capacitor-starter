@@ -28,6 +28,19 @@ to `packages/core` and leave the UI consuming a prop or hook.
 - Prefer Tailwind/`@capacitor/*`-safe utilities (e.g. `pt-[env(safe-area-inset-top)]`,
   `min-h-[100dvh]`) over fixed heights; account for the keyboard on input screens.
 
+## Shared components (no one-off buttons)
+- Figma Make often emits custom/inline button implementations (raw `<button>`,
+  ad-hoc styled divs, per-screen button variants). Always replace these with the
+  shared button component in `packages/ui` — never let a one-off button survive.
+- Preserve the intended Figma style exactly: match the variant/size to the
+  existing look, or extend the shared button with a new variant if none fits.
+  Refactor toward the shared component; do not restyle the design.
+- Apply this on every sync and when building new screens. If the shared button
+  can't express a Figma style, add the variant to the shared component rather
+  than reintroducing a bespoke button.
+- The same principle holds for other repeated primitives (inputs, cards, etc.):
+  prefer the shared `packages/ui` component over duplicating Figma's inline markup.
+
 ## Hard rules
 - `.figma-src/` is read-only upstream source. Never edit it or push to it.
 - Never fabricate auth, secrets, tokens, or data-access logic. Backend touchpoints
