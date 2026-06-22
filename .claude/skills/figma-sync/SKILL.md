@@ -147,17 +147,35 @@ Present the plan to the user. **Do not modify any file yet** (other than
   `packages/core`). Touch nothing in `apps/mobile`, nothing else in `packages/core`,
   nothing in `.figma-src/`.
 - Update `packages/ui/src/index.ts` (the barrel) for every add / remove / rename.
-- Build the web bundle and run the typecheck. A broken EXPORTED signature in
-  `packages/ui` means logic crept back in, or an intentional contract change that
-  needs a matching `packages/core` update — surface it to the user, do not paper over
-  it by editing core to "make it compile".
+
+#### Quality gates (all must pass before step 7)
+Run these from the repo root, in order. The PR is opened ONLY if all pass. Use the
+project's package manager (`pnpm` default; `npm run` / `bun run` if that's the repo).
+Prefer the repo's own scripts — read `package.json` and use what's defined rather than
+inventing commands:
+
+1. **Lint** — `pnpm lint` (Biome in this kit; whatever the `lint` script is). Fix
+   lint errors in the files YOU changed (`packages/ui` + flagged stubs) only.
+2. **Typecheck** — `pnpm typecheck` (the repo's `typecheck` script, `tsc -b --noEmit`). A
+   broken EXPORTED signature in `packages/ui` means logic crept back in, or an
+   intentional contract change that needs a matching `packages/core` update — STOP and
+   surface it; do NOT edit `packages/core` logic or `apps/mobile` to "make it compile",
+   that breaks the boundary. Such a case is a follow-up, not a paper-over.
+3. **Build** — `pnpm build:ui` then `pnpm build:mobile` (the web bundle). Catches what
+   lint/typecheck miss (asset imports, font packages, barrel exports).
+
+If any gate fails for a reason inside your write scope, fix it and re-run that gate.
+If a gate fails because the change needs `packages/core`/`apps/mobile` work (out of
+scope), STOP: do not open the PR, report the failure + the needed follow-up, and leave
+the working tree for the user. Record the gate results (pass/fail) in the PR body.
 
 ### 7. Update the anchor + open the PR
 - Set `synced_commit` = `to_commit`, `synced_at` = today, in `FIGMA_SOURCE.json`.
 - Create a branch (e.g. `figma-sync/<to_commit-short>`), commit (message references the
   upstream commit range `from..to`), push, and open a PR via `gh`. The PR body embeds
-  the `SYNC_PLAN.md` summary and the backend follow-up list. After the PR number is
-  known, set `last_sync_pr` and amend.
+  the `SYNC_PLAN.md` summary, the **quality-gate results** (lint / typecheck / build —
+  all green), and the backend follow-up list. After the PR number is known, set
+  `last_sync_pr` and amend.
 - Do NOT auto-merge. Do NOT run native builds, signing, or store submission.
 
 ## Guardrails

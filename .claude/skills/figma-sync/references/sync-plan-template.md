@@ -52,6 +52,15 @@ For each ui+stub and backend-follow-up:
 
 Or "none — pure UI sync".
 
+## Quality gates (filled in at apply time, step 6)
+The PR opens only when all pass. Record the result of each:
+- [ ] **lint** (`pnpm lint`) — pass
+- [ ] **typecheck** (`pnpm typecheck`) — pass
+- [ ] **build** (`pnpm build:ui` + `pnpm build:mobile`) — pass
+
+A failure that needs `packages/core` / `apps/mobile` work is out of scope: stop, do
+not open the PR, and list it under follow-ups instead.
+
 ## Open questions / risks
 Anything the reviewer should weigh in on: an exported signature that the design forces
 to change, an upstream rename that's ambiguous against our split, a removed screen
