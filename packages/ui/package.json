@@ -4,5 +4,9 @@
   "private": true,
   "type": "module",
   "main": "src/index.ts",
-  "peerDependencies": { "react": ">=18", "react-dom": ">=18" }
+  "peerDependencies": { "react": ">=18", "react-dom": ">=18" },
+  "scripts": {
+    "lint": "biome lint ./src",
+    "check": "biome check --write ./src"
+  }
 }

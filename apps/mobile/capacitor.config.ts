@@ -1,4 +1,4 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli';
 
 // init-from-figma fills these three tokens before running cap add.
 // Do not edit manually — run /init-from-figma <url> <AppName> <com.bundle.id>

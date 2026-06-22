@@ -119,6 +119,22 @@ to `packages/core` and leave the UI consuming a prop or hook.
 - UI / web-layer changes ship via OTA live update (no store review).
 - New native capabilities (plugins, permissions) require a store submission.
 
+## Linting and formatting (Biome)
+- This project uses [Biome](https://biomejs.dev/) for both linting and formatting — no ESLint, no Prettier.
+- Run from the workspace root:
+  - `pnpm lint` — lint all packages (read-only, reports issues)
+  - `pnpm format` — format all packages in place
+  - `pnpm check` — lint + format + apply safe fixes in one pass (preferred before committing)
+- Per-package: `pnpm --filter @app/ui check`, `pnpm --filter @app/core check`
+- Config lives in `biome.json` at the repo root and applies to all workspaces.
+- Key rules enforced (map directly to project guidelines above):
+  - `noArrayIndexKey` — no bare index keys in `.map()`
+  - `useExhaustiveDependencies` — effect dep arrays must match the body
+  - `noSvgWithoutTitle` / `useAltText` — SVG and image accessibility
+  - `noUnusedVariables` — keep code clean
+- Never add `// biome-ignore` suppressions without a comment explaining why.
+- Do not add ESLint or Prettier — Biome replaces both.
+
 ## Common commands
 - Build web bundle: from `apps/mobile`, run the app's build script.
 - Sync native: `cap sync` from `apps/mobile`.
