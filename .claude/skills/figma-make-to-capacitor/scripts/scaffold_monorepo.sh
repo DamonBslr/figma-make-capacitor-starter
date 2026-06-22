@@ -3,19 +3,28 @@
 # Deterministic setup only; the UI placement and logic split are done by the skill.
 # Run from the directory that should become the monorepo root.
 #
-#   PM=pnpm ./scaffold_monorepo.sh        # PM = pnpm | bun | npm  (default pnpm)
+#   PM=pnpm ./scaffold_monorepo.sh <app-name>   # e.g. scaffold_monorepo.sh acme
+#   PM=pnpm ./scaffold_monorepo.sh              # falls back to "app-monorepo"
 
 set -euo pipefail
 PM="${PM:-pnpm}"
 
-echo "▶ Scaffolding monorepo (package manager: ${PM})"
+# Derive a kebab-case monorepo name from the first arg (or fall back to placeholder).
+RAW_NAME="${1:-}"
+if [ -n "${RAW_NAME}" ]; then
+  MONOREPO_NAME="$(echo "${RAW_NAME}" | tr '[:upper:] ' '[:lower:]-' | tr -cd 'a-z0-9-')"
+else
+  MONOREPO_NAME="app-monorepo"
+fi
+
+echo "▶ Scaffolding monorepo '${MONOREPO_NAME}' (package manager: ${PM})"
 
 mkdir -p apps/mobile packages/ui/src packages/core/src .github/workflows
 
 # ---- root package.json (workspaces field works for npm/bun; pnpm uses the yaml) ----
-cat > package.json <<'JSON'
+cat > package.json <<JSON
 {
-  "name": "app-monorepo",
+  "name": "${MONOREPO_NAME}",
   "version": "0.0.0",
   "private": true,
   "workspaces": ["apps/*", "packages/*"],

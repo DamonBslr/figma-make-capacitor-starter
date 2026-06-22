@@ -98,9 +98,15 @@ that App Store Connect rejects at upload time.
    `sessionStorage`, env/secret reads, auth flows, business rules. Record findings
    in `TRANSFORMATION_REPORT.md`. This inventory drives step 5.
 
-3. **Scaffold** *(skip if starter detected).* Run `scripts/scaffold_monorepo.sh`
-   from the repo root to create the workspace skeleton, base TS config, gitignore,
-   and the three layers.
+3. **Scaffold** *(skip if starter detected).* Run `scripts/scaffold_monorepo.sh "<AppName>"`
+   from the repo root — passing the app display name so the root `package.json`
+   `"name"` field is set to a kebab-case slug of the real app name (e.g. `acme`)
+   rather than the placeholder `app-monorepo`. Also rename the working directory
+   itself to match (e.g. `mv ../my-repo ../acme`) and update the `git remote` if
+   the repo already has one, so the directory name, package name, and remote all
+   agree from the start. Record the chosen name in `TRANSFORMATION_REPORT.md`.
+   The script creates the workspace skeleton, base TS config, gitignore, and the
+   three layers.
 
 4. **Place the UI.** Move screens and presentational components into
    `packages/ui/src`; move the app entry, router, and providers into
