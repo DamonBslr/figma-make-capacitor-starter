@@ -33,6 +33,12 @@ Read `references/mapping-heuristics.md` (how to classify each upstream change) a
 - Branch to sync from — default `main`. The Figma repo URL is read from
   `FIGMA_SOURCE.json` (or, on a baseline run, asked for / read from the existing
   `.figma-src/` remote).
+- `--to <ref>` (optional) — sync only **up to** this upstream commit instead of all
+  the way to `origin/<branch>` HEAD. This is the **stepwise** mode: pass the SHA of
+  the next single Figma Make commit to apply one commit at a time, get smaller
+  commit-aligned diffs, and advance the anchor to that commit. Omit it to sync the
+  whole pending range at once. `<ref>` must be an ancestor of `origin/<branch>` and a
+  descendant of the current `synced_commit`.
 
 ## The anchor: FIGMA_SOURCE.json
 A committed file at the repo root that records which upstream Figma Make commit the
@@ -61,19 +67,28 @@ Read `FIGMA_SOURCE.json` at the repo root.
   makes the first diff meaningful, so it is a deliberate human-confirmed step, not
   something this skill guesses. Do not attempt to map anything without the anchor.
 
-### 2. Fetch upstream (read-only)
+### 2. Fetch upstream (read-only) and resolve the target
 `.figma-src/` is read-only upstream source: never edit it, never push to it, never
 commit inside it. Operate only with read commands:
 
 - `git -C .figma-src fetch origin`
-- `git -C .figma-src log --oneline <synced_commit>..origin/<branch>` — enumerate the
-  new commits since the anchor.
-- If that range is empty (`synced_commit` == `origin/<branch>` HEAD): report
+- Resolve **`to_commit`**: if `--to <ref>` was given, `git -C .figma-src rev-parse
+  --verify <ref>^{commit}` and confirm it sits in range —
+  `git -C .figma-src merge-base --is-ancestor <synced_commit> <to_commit>` AND
+  `git -C .figma-src merge-base --is-ancestor <to_commit> origin/<branch>` must both
+  pass (the target is after the anchor and at-or-before HEAD). If either fails, STOP
+  and explain. If no `--to`, `to_commit` = `origin/<branch>` HEAD.
+- `git -C .figma-src log --oneline <synced_commit>..<to_commit>` — enumerate the
+  commits being synced in this run.
+- If that range is empty (`synced_commit` == `to_commit`): report
   **"Already up to date"** and STOP.
-- `git -C .figma-src diff --stat <synced_commit>..origin/<branch>` — the changed-file
+- `git -C .figma-src diff --stat <synced_commit>..<to_commit>` — the changed-file
   overview.
-- `git -C .figma-src diff <synced_commit>..origin/<branch> -- <path>` — per-file
+- `git -C .figma-src diff <synced_commit>..<to_commit> -- <path>` — per-file
   patches for the files you need to map.
+
+Everywhere below, `from_commit` = `synced_commit` and the diff range is
+`<from_commit>..<to_commit>`.
 
 Capture `from_commit` (= `synced_commit`) and `to_commit` (= the resolved
 `origin/<branch>` SHA) for the plan header.
