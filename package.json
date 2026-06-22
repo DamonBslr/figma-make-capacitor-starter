@@ -10,6 +10,7 @@
     "build:ui": "echo 'build packages/ui' ",
     "build:mobile": "echo 'build apps/mobile' ",
     "sync": "echo 'run cap sync from apps/mobile' ",
+    "figma:pending": "bash .claude/skills/figma-sync/scripts/pending_commits.sh",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write ."

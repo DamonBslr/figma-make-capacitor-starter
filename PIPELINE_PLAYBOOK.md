@@ -38,6 +38,7 @@ cp -r /path/to/kit2/.claude/skills/supabase-*              ~/.claude/skills/
 cp    /path/to/kit2/.claude/commands/wire-supabase.md      ~/.claude/commands/
 
 chmod +x ~/.claude/skills/figma-make-to-capacitor/scripts/*.sh
+chmod +x ~/.claude/skills/figma-sync/scripts/*.sh
 chmod +x ~/.claude/skills/supabase-foundation/scripts/*.sh
 ```
 

@@ -71,7 +71,9 @@ Read `FIGMA_SOURCE.json` at the repo root.
 `.figma-src/` is read-only upstream source: never edit it, never push to it, never
 commit inside it. Operate only with read commands:
 
-- `git -C .figma-src fetch origin`
+- `git -C .figma-src fetch origin` (or run `scripts/pending_commits.sh`, which reads
+  `synced_commit` + `branch` from `FIGMA_SOURCE.json`, fetches, and prints the pending
+  commits oldest→newest — use it so you never hand-type the anchor SHA).
 - Resolve **`to_commit`**: if `--to <ref>` was given, `git -C .figma-src rev-parse
   --verify <ref>^{commit}` and confirm it sits in range —
   `git -C .figma-src merge-base --is-ancestor <synced_commit> <to_commit>` AND
