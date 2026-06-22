@@ -135,6 +135,11 @@ to `packages/core` and leave the UI consuming a prop or hook.
 - Never add `// biome-ignore` suppressions without a comment explaining why.
 - Do not add ESLint or Prettier — Biome replaces both.
 
+## iOS export compliance
+- `apps/mobile/ios/App/App/Info.plist` must always contain `ITSAppUsesNonExemptEncryption` set to `<false/>`.
+- Without it, every App Store Connect upload shows "Missing Compliance" and requires manually answering the export questionnaire.
+- This app uses only OS-level TLS (Capacitor/WKWebView) — no custom crypto — so `false` is the correct declaration.
+
 ## Common commands
 - Build web bundle: from `apps/mobile`, run the app's build script.
 - Sync native: `cap sync` from `apps/mobile`.
