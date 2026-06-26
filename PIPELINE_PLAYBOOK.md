@@ -37,9 +37,14 @@ cp    /path/to/kit/.claude/commands/init-from-figma.md     ~/.claude/commands/
 cp -r /path/to/kit2/.claude/skills/supabase-*              ~/.claude/skills/
 cp    /path/to/kit2/.claude/commands/wire-supabase.md      ~/.claude/commands/
 
+# Pre-ship — security audit
+cp -r /path/to/kit/.claude/skills/security-audit           ~/.claude/skills/
+cp    /path/to/kit/.claude/commands/security-audit.md      ~/.claude/commands/
+
 chmod +x ~/.claude/skills/figma-make-to-capacitor/scripts/*.sh
 chmod +x ~/.claude/skills/figma-sync/scripts/*.sh
 chmod +x ~/.claude/skills/supabase-foundation/scripts/*.sh
+chmod +x ~/.claude/skills/security-audit/scripts/*.sh
 ```
 
 Verify:
@@ -150,7 +155,9 @@ git grep -nE "service_role|sk-|secret" -- . ':!*.example' || echo "clean"
 git check-ignore apps/mobile/.env && echo ".env is ignored ✓"
 ```
 Only the Supabase **anon** key may appear in the client. Provider/AI keys live in
-Edge Function secrets, never in the repo.
+Edge Function secrets, never in the repo. These two snippets are exactly what
+`/security-audit` automates (plus RLS, boundary, and live-DB checks) — run the
+command instead of grepping by hand once the backend is wired.
 
 **REVIEW 5 — async interface changes (e.g. image generation)**
 - When a sync stub became async, confirm the UI stayed prop-driven (loading state
@@ -170,9 +177,13 @@ Edge Function secrets, never in the repo.
   approve. Then the sync applies + opens a PR — review that PR before merge, and run
   `/wire-supabase` for any backend follow-ups it flagged.
 
-**Before you ship**
-- RLS verified on every table · `useAuth` reviewed · `.env` gitignored · OTA channel
-  live · native signing configured.
+**Before you ship — run `/security-audit`**
+- One command runs the whole pre-ship gate: RLS on every table · `useAuth` real ·
+  no leaked keys · `.env` gitignored · `packages/ui` boundary clean · edge-function
+  secrets server-side. It also emits read-only SQL to confirm the **live** database
+  matches the code. Clear every blocker before OTA/store ship.
+- Still confirm the human-only bits by hand: OTA channel live · native signing
+  configured · (for the store) run `/app-store-readiness-audit`.
 
 ---
 
@@ -219,5 +230,6 @@ through `/wire-supabase` first.
 | New app from prototype | clone starter → `/init-from-figma <url> <name> <id>` | `TRANSFORMATION_REPORT.md` | what moved, stub list |
 | Wire backend | `/wire-supabase` | each gate (self-guided) | schema/RLS, `useAuth`, keys, async UI, OAuth |
 | Sync a design change | `/sync-figma [branch]` | `SYNC_PLAN.md`, then a PR | per-file mapping, boundary check |
+| Security audit before ship | `/security-audit` | severity-ranked report | blockers/risks, then live-DB SQL |
 | Ship UI change | OTA push (Capgo) | — | — |
 | Ship native change | store submission | — | — |

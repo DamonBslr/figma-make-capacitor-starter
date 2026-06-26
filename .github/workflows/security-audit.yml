@@ -1,0 +1,23 @@
+# Deterministic security gate for the Figma -> Capacitor -> Supabase pipeline.
+# Runs the SAME script the /security-audit skill runs, so CI and the skill can
+# never drift. Blocks on: leaked secrets, a tracked .env, packages/ui boundary
+# violations, tables created without RLS, and world-open (true) policies.
+#
+# Judgment checks (auth quality, edge-function review, live-DB drift) are NOT
+# gated here — run `/security-audit` for the full, evidence-backed report.
+name: Security Gate
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history isn't required, but the script uses `git grep` /
+          # `git ls-files` against the checked-out tree.
+          fetch-depth: 1
+      - name: Run deterministic security gate
+        run: bash .claude/skills/security-audit/scripts/audit-security.sh

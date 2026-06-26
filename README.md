@@ -106,9 +106,13 @@ cp -r .claude/skills/supabase-schema          ~/.claude/skills/
 cp -r .claude/skills/supabase-feature-spec    ~/.claude/skills/
 cp -r .claude/skills/supabase-wire-stub       ~/.claude/skills/
 cp -r .claude/skills/supabase-native-auth     ~/.claude/skills/
+cp -r .claude/skills/security-audit           ~/.claude/skills/
 
 cp .claude/commands/init-from-figma.md ~/.claude/commands/
 cp .claude/commands/wire-supabase.md   ~/.claude/commands/
+cp .claude/commands/security-audit.md  ~/.claude/commands/
+
+chmod +x ~/.claude/skills/security-audit/scripts/*.sh
 
 chmod +x ~/.claude/skills/figma-make-to-capacitor/scripts/*.sh
 ```
@@ -202,9 +206,25 @@ one giant context window trying to wire everything at once.
 - Secret provider keys (OpenAI, etc.) live only in Supabase Edge Function secrets, never in the client
 - Subagents only ever write `packages/core`, `supabase/functions`, and the `apps/mobile` shell — never `packages/ui`, `.figma-src`, or migrations (the schema stays owned by the orchestrator)
 
+Verify all of the above before every release with **`/security-audit`** — a
+whole-app, publish-readiness audit (ui/core boundary, key safety, RLS on every
+table, `useAuth`, edge functions, Capacitor config). It runs a deterministic gate
+script (also enforced in CI via `.github/workflows/security-audit.yml`) and emits
+read-only SQL to confirm the **live** database is locked down, then reports
+blockers and risks with `file:line` evidence.
+
 ---
 
 ## Phase 3 — Ship
+
+### Pre-ship gate
+
+Before any release, run **`/security-audit`** and clear every blocker. It's the
+single check that answers "is all the data secure and safe to publish?" — the
+deterministic half also runs in CI on every push/PR, so a key leak, an RLS-off
+table, or a `packages/ui` boundary break fails the build. For App Store / native
+submission readiness (signing, permissions, encryption export) run
+`/app-store-readiness-audit` as well.
 
 ### UI-only changes (OTA, no store review)
 
