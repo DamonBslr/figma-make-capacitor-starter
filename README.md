@@ -282,6 +282,11 @@ the next sync. Review the `SYNC_PLAN.md` and the resulting PR before merging.
 # Install all dependencies
 pnpm install
 
+# Smoke-test the shell with a placeholder hello-world app (works on the blank starter):
+pnpm dev            # in the browser
+pnpm dummy:ios      # on the iOS Simulator (needs Xcode)
+pnpm dummy:android  # on an Android emulator (needs Android Studio)
+
 # Build the web bundle (from apps/mobile)
 cd apps/mobile && pnpm build
 

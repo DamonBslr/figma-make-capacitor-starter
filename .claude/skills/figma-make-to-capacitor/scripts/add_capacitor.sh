@@ -24,10 +24,12 @@ add()  { case "$PM" in pnpm) pnpm --filter @app/mobile add "$@";; bun) cd apps/m
 addD() { case "$PM" in pnpm) pnpm --filter @app/mobile add -D "$@";; bun) cd apps/mobile && bun add -d "$@";; *) cd apps/mobile && npm install -D "$@";; esac; }
 cap()  { case "$PM" in pnpm) pnpm --filter @app/mobile exec cap "$@";; bun) cd apps/mobile && bunx cap "$@";; *) cd apps/mobile && npx cap "$@";; esac; }
 
-echo "▶ Filling capacitor.config.ts template tokens"
-# perl handles both BSD (macOS) and GNU sed portably
+echo "▶ Writing real app identity into capacitor.config.ts"
+# Replace the VALUES of appId/appName/webDir — works whether the file still holds the
+# starter defaults (com.example.dummy / Dummy App / dist) or older {{TOKENS}}.
+# perl handles both BSD (macOS) and GNU portably.
 perl -i -pe \
-  "s/\\{\\{APP_NAME\\}\\}/${APP_NAME}/g; s/\\{\\{APP_ID\\}\\}/${APP_ID}/g; s/\\{\\{WEB_DIR\\}\\}/${WEB_DIR}/g" \
+  "s/appId:\\s*'[^']*'/appId: '${APP_ID}'/; s/appName:\\s*'[^']*'/appName: '${APP_NAME}'/; s/webDir:\\s*'[^']*'/webDir: '${WEB_DIR}'/" \
   apps/mobile/capacitor.config.ts
 
 echo "▶ Installing Capacitor core + CLI"
@@ -36,8 +38,17 @@ addD @capacitor/cli
 
 echo "▶ Adding iOS + Android platforms"
 add @capacitor/ios @capacitor/android
+# Drop any throwaway dummy native projects (from `pnpm dummy:*`) so they regenerate with
+# the REAL bundle id. They are gitignored in the starter and never committed — safe to rm.
+rm -rf apps/mobile/ios apps/mobile/android
 cap add ios
 cap add android
+
+# Un-ignore the native projects so the real app commits them (standard Capacitor contract).
+# Strips only the starter-only "dummy-native" block; the build-artifact ignores stay.
+if [ -f .gitignore ]; then
+  perl -i -0pe 's/\n?# >>> dummy-native.*?# <<< dummy-native\n//s' .gitignore
+fi
 
 echo "▶ Installing OTA live-update plugin (Capgo)"
 add @capgo/capacitor-updater

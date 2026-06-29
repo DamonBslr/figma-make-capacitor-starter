@@ -84,13 +84,25 @@ Have the Figma repo URL, an app name, and a bundle id (`com.acme.app`) ready.
 - `tsconfig.base.json` with `@app/ui` / `@app/core` path aliases
 - `.gitignore` (excludes `.figma-src/`, native build artifacts, `.env`)
 - `CLAUDE.md` at the repo root
-- `apps/mobile/capacitor.config.ts` (token template — filled by the agent)
-- `apps/mobile/src/App.tsx` with `notifyAppReady` pre-wired
+- `apps/mobile/capacitor.config.ts` with valid dummy defaults (rewritten by the agent)
+- A runnable web build: `apps/mobile/{vite.config.ts,tsconfig.json,index.html}` +
+  `src/main.tsx` + a placeholder `App.tsx` with `notifyAppReady` pre-wired
 - `.github/workflows/ota-deploy.yml` skeleton
 
+**Smoke-test the shell before any Figma import** (optional, verifies the plumbing):
+```bash
+pnpm install
+pnpm dev            # hello-world in the browser
+pnpm dummy:ios      # hello-world on the iOS Simulator (needs Xcode)
+pnpm dummy:android  # hello-world on an Android emulator (needs Android Studio)
+```
+The dummy `ios/`/`android/` projects are gitignored — `/init-from-figma` regenerates them
+with your real bundle id and un-ignores them, so they never pollute a real app.
+
 **What the agent still does:** clone `.figma-src/`, inventory the Figma source,
-move screens + components, create typed stubs, fill the 3 Capacitor tokens, run
-`cap add ios/android`, build, and write `TRANSFORMATION_REPORT.md`.
+move screens + components, create typed stubs, write the real `appId`/`appName` into
+`capacitor.config.ts`, regenerate `cap add ios/android`, build, and write
+`TRANSFORMATION_REPORT.md`.
 
 ### 2. Build the app
 ```

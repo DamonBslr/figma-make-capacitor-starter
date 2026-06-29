@@ -48,8 +48,13 @@ test -f packages/ui/package.json && test -f tsconfig.base.json && echo "starter"
 ```
 
 **If starter detected:** steps 3, 8, and 9 are already done — skip them.
-The skeleton, `CLAUDE.md`, and `App.tsx` with `notifyAppReady` are pre-baked.
-Proceed directly from step 1 → 2 → 4 → 5 → 6 → 7 → 10 → 10.5 → 11.
+The skeleton, `CLAUDE.md`, and `App.tsx` with `notifyAppReady` are pre-baked. The web
+build is also pre-baked — `apps/mobile/{vite.config.ts,tsconfig.json,index.html}` and
+`apps/mobile/src/main.tsx` already exist (the starter runs a dummy app via
+`pnpm dummy:ios|android`). In step 4 ADAPT these in place; do not recreate them. In step
+6, `add_capacitor.sh` overwrites the dummy `appId`/`appName` with the real values and
+un-ignores the native projects (see that step). Proceed from step 1 → 2 → 4 → 5 → 6 → 7
+→ 10 → 10.5 → 11.
 
 **If no starter:** follow all 11 steps — the scaffold script creates the skeleton
 from scratch. Both paths produce the same result.
@@ -135,10 +140,13 @@ that App Store Connect rejects at upload time.
    tokens, or data-access logic. List every stub in the report.
 
 6. **Add Capacitor + OTA.** From the repo root, run
-   `scripts/add_capacitor.sh "<AppName>" "<app.id>" "<webDir>"`. It fills the
-   three tokens in the pre-baked `capacitor.config.ts`, installs Capacitor core +
-   CLI, adds iOS + Android, and installs the OTA plugin plus a baseline of native
-   plugins. `<webDir>` is the web build output dir (e.g. `dist`).
+   `scripts/add_capacitor.sh "<AppName>" "<app.id>" "<webDir>"`. It writes the real
+   `appId`/`appName`/`webDir` into `capacitor.config.ts` (replacing the starter dummy
+   defaults), installs Capacitor core + CLI, deletes any throwaway dummy `ios/`/`android/`
+   projects and re-adds them with the real bundle id, removes the starter-only
+   `dummy-native` block from `.gitignore` so the native projects get committed, and
+   installs the OTA plugin plus a baseline of native plugins. `<webDir>` is the web build
+   output dir (e.g. `dist`).
 
 7. **Adapt web-only patterns for native.** Safe-area insets; hardware back button
    via `@capacitor/app`; replace web storage with `@capacitor/preferences` (inside
@@ -160,9 +168,14 @@ that App Store Connect rejects at upload time.
 
 10.5. **Wire local dev with hot reload.** `apps/mobile` needs a Vite dev server
     that serves the React tree (importing `@app/ui` and `@app/core` via the monorepo
-    workspace aliases) and supports HMR. The root `package.json` already has a `dev`
-    script stub (`pnpm --filter @app/mobile dev`) from the scaffold; make it real:
+    workspace aliases) and supports HMR.
 
+    *Starter detected:* this is already wired — `apps/mobile/{vite.config.ts,index.html,
+    tsconfig.json}`, `apps/mobile/src/main.tsx`, and the root `dev` / `apps/mobile` `dev`
+    scripts are pre-baked, and `pnpm dev` already runs the dummy app. Just confirm HMR
+    still works after the Figma UI is in place; no new files needed.
+
+    *No starter (building from scratch):*
     a. Add a `vite.config.ts` to `apps/mobile` that resolves the `@app/ui` and
        `@app/core` path aliases from `tsconfig.base.json` (use `vite-tsconfig-paths`
        or map them explicitly in `resolve.alias`).

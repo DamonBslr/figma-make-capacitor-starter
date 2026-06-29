@@ -7,6 +7,15 @@ build/
 .env.*
 !.env.example
 .DS_Store
+
+# >>> dummy-native (blank-starter only — removed by /init-from-figma)
+# Native projects here are throwaway dummies (com.example.dummy) from
+# `pnpm dummy:ios|android`. A real app commits its native projects, so init-from-figma
+# strips this block. The per-folder build-artifact ignores below always apply.
+apps/mobile/ios/
+apps/mobile/android/
+# <<< dummy-native
+
 apps/mobile/ios/App/build/
 apps/mobile/ios/App/Pods/
 apps/mobile/android/.gradle/
